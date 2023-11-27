@@ -1,0 +1,14 @@
+select distinct ?w ?ig ?vn ?vpti {
+  {
+    ?mw bdo:printMethod bdr:PrintMethod_Modern .
+  } union {
+    ?mw bdo:printMethod bdr:Binding_Codex_Perfect .
+  }
+  ?mwadm adm:adminAbout ?mw ;
+         adm:status bda:StatusReleased .
+  ?mw :instanceHasReproduction ?w .
+  ?w a :ImageInstance ;
+     :instanceHasVolume ?ig .
+  ?ig :volumeNumber ?vn ;
+      :volumePagesTbrcIntro ?vpti .
+}
