@@ -7,6 +7,8 @@ import boto3
 import botocore
 import gzip
 import csv
+from pyzbar.pyzbar import decode
+from PIL import Image
 
 # use yaml.CSafeLoader / if available but don't crash if it isn't
 try:
@@ -100,6 +102,11 @@ def getImageList(iiLocalName, igLocalName, force=False, getmissing=False):
         gzipfile.write(json.dumps(data).encode('utf-8'))
     return data
 
+def getimg(wlname, iglname, fname):
+    key = get_s3_folder_prefix(wlname, iglname)+fname
+    blob = gets3blob(key)
+    return Image.open(blob)
+
 #
 # db format
 #
@@ -153,20 +160,44 @@ def ordered_imglist(imglist, nb_tip):
     # tip = tbrc intro pages
     # most likely are 10 last then 10 first
     res = []
-    fnames = imglist.keys()
     for i in range(min(10, len(fnames)-nb_tip)):
-        res.add(fnames[i])
+        res.add(imglist[i]["fname"])
     for i in range(nb_tip, min(10, len(fnames))):
         if fnames[i] not in res:
-            res.add(fnames[i])
+            res.add(imglist[i]["fname"])
     return res
+
+def get_detections(pil_img):
+    info = decode(pil_img)
+    if info is None:
+        return [], False
+    res = []
+    found = False
+    for d in info:
+        resi = {
+            "type": d.type,
+            "data": str(d.data)
+        }
+        if d.type.startswith("EAN"):
+            found = True
+        if d.rect:
+            resi["r"] = [d.rect.left, d.rect.top, d.rect.width, d.rect.height]
+        res.add(res)
+    return res, found
+
 
 def process_ig(w, ig, ig_info, db_ig_info):
     if has_id(db_ig_info):
         return
     flist = getImageList(w, ig)
     ordered_flist = ordered_imglist(flist, ig_info["ti"])
-    
+    for imgfname in ordered_imglist:
+        img = getimg(w, ig, imgfname)
+        dets, found = get_detection(img)
+        db_ig_info[imgfname] = dets
+        if found:
+            break
+        
 
 def process_w(wrid, w_info, db_w_info):
     for ig, ig_info in w_info.items():
