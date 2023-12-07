@@ -137,7 +137,7 @@ def get_w_infos():
 
 def has_id(db_ig_info):
     # returns True if an id has been found for this ig:
-    for fname, detections in db_ig_info:
+    for fname, detections in db_ig_info.items():
         if fname == "n":
             continue
         if len(detections) > 0:
