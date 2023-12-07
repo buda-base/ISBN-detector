@@ -244,7 +244,7 @@ def main(wrid = None):
         return
     if Path("db.yml").is_file():
         with open("db.yml", 'r') as stream:
-            iiifdb = yaml.load(stream, Loader=yaml_loader)
+            db = yaml.load(stream, Loader=yaml_loader)
     i = 0
     for w in tqdm(sorted(w_infos)):
         if w not in db:
@@ -263,6 +263,6 @@ def main(wrid = None):
     print("writing db.yml")
     if i > 0:
         with open("db.yml", 'w') as stream:
-            yaml.dump(db, stream, default_flow_style=False, Dumper=yaml_dumper)
+            yaml.dump(db, stream, Dumper=yaml_dumper)
 
 main()
