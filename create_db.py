@@ -11,6 +11,11 @@ from pyzbar.pyzbar import decode
 from PIL import Image
 from pathlib import Path
 import os
+import hashlib
+import json
+
+SESSION = boto3.Session(profile_name='thumbnailgen')
+S3 = SESSION.client('s3')
 
 # use yaml.CSafeLoader / if available but don't crash if it isn't
 try:
@@ -79,7 +84,7 @@ def gets3blob(s3Key):
             raise
 
 # This has a cache mechanism
-def getImageList(iiLocalName, igLocalName, force=False, getmissing=False):
+def getImageList(iiLocalName, igLocalName, force=False, getmissing=True):
     cachepath = Path("cache/il/"+igLocalName+".json.gz")
     if not force and cachepath.is_file():
         with gzip.open(str(cachepath), 'r') as gzipfile:
@@ -122,12 +127,12 @@ def getimg(wlname, iglname, fname):
 # W:
 #   ro: MW
 #   I:
-#     vnum: int
+#     n: int
 #     imgs:
 #        fname:
-#          - type: EAN13
-#            data: 9787800571282
-#            rect: [l, t, w, h]
+#          - t: EAN13
+#            d: 9787800571282
+#            r: [l, t, w, h]
 #        
 
 def get_w_infos():
@@ -144,29 +149,30 @@ def get_w_infos():
                 res[w] = {}
             res[w]["ro"] = mw # reproduction of
             res[w][ig] = {
-                "vnum": vn,
+                "n": vn,
                 "ti": ti
             }
     return res
 
 def has_id(db_ig_info):
     # returns True if an id has been found for this ig:
-    if imgs not in db_ig_info:
+    if "imgs" not in db_ig_info:
         return False
     for fname, detections in db_ig_info["imgs"]:
         if detections:
             return True
     return False
 
-def ordered_imglist(imglist, nb_tip):
+def ordered_imglist(fnames, nb_tip):
     # tip = tbrc intro pages
     # most likely are 10 last then 10 first
     res = []
-    for i in range(min(10, len(fnames)-nb_tip)):
-        res.add(imglist[i]["fname"])
-    for i in range(nb_tip, min(10, len(fnames))):
+    l = len(fnames)
+    for i in range(1, min(10, l-nb_tip)):
+        res.append(fnames[l-i]["filename"])
+    for i in range(nb_tip, min(10, l)):
         if fnames[i] not in res:
-            res.add(imglist[i]["fname"])
+            res.append(fnames[i]["filename"])
     return res
 
 def get_detections(pil_img):
@@ -176,15 +182,20 @@ def get_detections(pil_img):
     res = []
     found = False
     for d in info:
+        data_str = None
+        try:
+            data_str = d.data.decode('ascii')
+        except:
+            print("cannot convert to string: "+str(d.data))
         resi = {
-            "type": d.type,
-            "data": str(d.data)
+            "t": d.type,
+            "d": data_str
         }
         if d.type.startswith("EAN"):
             found = True
         if d.rect:
-            resi["r"] = [d.rect.left, d.rect.top, d.rect.width, d.rect.height]
-        res.add(res)
+            resi["r"] = ",".join([str(d.rect.left), str(d.rect.top), str(d.rect.width), str(d.rect.height)])
+        res.append(resi)
     return res, found
 
 
@@ -192,10 +203,13 @@ def process_ig(w, ig, ig_info, db_ig_info):
     if has_id(db_ig_info):
         return
     flist = getImageList(w, ig)
+    if flist is None:
+        print("could not get image list for "+w+"-"+ig)
+        return
     ordered_flist = ordered_imglist(flist, ig_info["ti"])
-    for imgfname in ordered_imglist:
+    for imgfname in ordered_flist:
         img = getimg(w, ig, imgfname)
-        dets, found = get_detection(img)
+        dets, found = get_detections(img)
         db_ig_info[imgfname] = dets
         if found:
             break
@@ -207,9 +221,10 @@ def process_w(wrid, w_info, db_w_info):
             continue
         if ig not in db_w_info:
             db_w_info[ig] = {
-                "vnum": ig_info["vnum"]
+                "n": ig_info["n"]
             }
         process_ig(wrid, ig, ig_info, db_w_info[ig])
+        return
 
 def main(wrid = None):
     w_infos = get_w_infos()    
@@ -220,13 +235,15 @@ def main(wrid = None):
         os.makedirs(str(cachedir))
     # read db
     db = {}
-    if Path("db.yml").is_file():
-        with open("db.yml", 'r') as stream:
-            iiifdb = yaml.load(stream, Loader=yaml_loader)
     if wrid is not None:
         if wrid not in db:
             db[wrid] = {}
         process_w(wrid, w_infos[wrid], db[wrid])
+        print(yaml.dump(db[wrid], Dumper=yaml_dumper))
+        return
+    if Path("db.yml").is_file():
+        with open("db.yml", 'r') as stream:
+            iiifdb = yaml.load(stream, Loader=yaml_loader)
     i = 0
     for w in tqdm(sorted(w_infos)):
         if w not in db:
@@ -236,7 +253,7 @@ def main(wrid = None):
         if i>= 1000:
             try:
                 with open("db.yml", 'w') as stream:
-                    yaml.dump(db, stream)
+                    yaml.dump(db, stream, Dumper=yaml_dumper)
                 i = 0
             except KeyboardInterrupt:
                 # poor man's atomicity
@@ -247,4 +264,4 @@ def main(wrid = None):
         with open("db.yml", 'w') as stream:
             yaml.dump(db, stream, default_flow_style=False, Dumper=yaml_dumper)
 
-main("W1PD95844")
+main()
