@@ -199,7 +199,7 @@ def get_detections(pil_img):
     return res, found
 
 
-def process_ig(w, ig, ig_info, db_ig_info):
+def process_ig(w, ig, ig_info, db_ig_info, re_run_det=False):
     if has_id(db_ig_info):
         return
     flist = getImageList(w, ig)
@@ -208,6 +208,8 @@ def process_ig(w, ig, ig_info, db_ig_info):
         return
     ordered_flist = ordered_imglist(flist, ig_info["ti"])
     for imgfname in ordered_flist:
+        if imgfname in db_ig_info and not re_run_det:
+            continue
         img = getimg(w, ig, imgfname)
         dets, found = get_detections(img)
         db_ig_info[imgfname] = dets
