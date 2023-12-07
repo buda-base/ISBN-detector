@@ -10,5 +10,7 @@ select distinct ?mw ?w ?ig ?vn ?vpti {
   ?w a :ImageInstance ;
      :instanceHasVolume ?ig .
   ?ig :volumeNumber ?vn ;
-      :volumePagesTbrcIntro ?vpti .
+      :volumePagesTbrcIntro ?vpti ;
+      :volumePagesTotal ?vpt .
+  FILTER(?vpt > 2)
 }
