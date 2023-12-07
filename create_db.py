@@ -224,7 +224,6 @@ def process_w(wrid, w_info, db_w_info):
                 "n": ig_info["n"]
             }
         process_ig(wrid, ig, ig_info, db_w_info[ig])
-        return
 
 def main(wrid = None):
     w_infos = get_w_infos()    
