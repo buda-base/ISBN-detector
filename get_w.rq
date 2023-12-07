@@ -1,4 +1,4 @@
-select distinct ?w ?ig ?vn ?vpti {
+select distinct ?mw ?w ?ig ?vn ?vpti {
   {
     ?mw bdo:printMethod bdr:PrintMethod_Modern .
   } union {

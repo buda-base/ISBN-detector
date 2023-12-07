@@ -9,6 +9,8 @@ import gzip
 import csv
 from pyzbar.pyzbar import decode
 from PIL import Image
+from pathlib import Path
+import os
 
 # use yaml.CSafeLoader / if available but don't crash if it isn't
 try:
@@ -131,8 +133,8 @@ def getimg(wlname, iglname, fname):
 def get_w_infos():
     res = {}
     with open('mw-w-ig-vn.csv', newline='') as csvfile:
-        reader = csv.reader(csvfile, delimiter=' ', quotechar='|')
-        for row in spamreader:
+        reader = csv.reader(csvfile)
+        for row in reader:
             mw = row[0]
             w = row[1]
             ig = row[2]
@@ -207,7 +209,7 @@ def process_w(wrid, w_info, db_w_info):
             db_w_info[ig] = {
                 "vnum": ig_info["vnum"]
             }
-        process_ig(w, ig, ig_info, db_w_info[ig])
+        process_ig(wrid, ig, ig_info, db_w_info[ig])
 
 def main(wrid = None):
     w_infos = get_w_infos()    
@@ -222,8 +224,8 @@ def main(wrid = None):
         with open("db.yml", 'r') as stream:
             iiifdb = yaml.load(stream, Loader=yaml_loader)
     if wrid is not None:
-        if w not in db:
-            db[w] = {}
+        if wrid not in db:
+            db[wrid] = {}
         process_w(wrid, w_infos[wrid], db[wrid])
     i = 0
     for w in tqdm(sorted(w_infos)):
