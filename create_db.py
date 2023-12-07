@@ -28,25 +28,6 @@ try:
 except (ImportError, AttributeError):
     yaml_dumper = yaml.SafeDumper
 
-def normalize_isbn(isbn):
-    return isbn.upper().replace("-", "").replace(" ", "")
-
-def well_formed(isbn):
-    # assumes isbn is normalized
-    match = re.search(r'^(\d{9}[0-9X]|\d{12}[0-9X])$', isbn)
-    return True if match else False
-
-def valid(isbn):
-    # assumes isbn is normalized
-    match = re.search(r'^(\d{9})(\d|X)$', isbn)
-    if not match:
-        return False
-
-    digits = match.group(1)
-    check_digit = 10 if match.group(2) == 'X' else int(match.group(2))
-    result = sum((i + 1) * int(digit) for i, digit in enumerate(digits))
-    return (result % 11) == check_digit
-
 def get_s3_folder_prefix(iiLocalName, igLocalName):
     """
     gives the s3 prefix (~folder) in which the volume will be present.
@@ -156,10 +137,10 @@ def get_w_infos():
 
 def has_id(db_ig_info):
     # returns True if an id has been found for this ig:
-    if "imgs" not in db_ig_info:
-        return False
-    for fname, detections in db_ig_info["imgs"]:
-        if detections:
+    for fname, detections in db_ig_info:
+        if fname == "n":
+            continue
+        if len(detections) > 0:
             return True
     return False
 
@@ -251,7 +232,7 @@ def main(wrid = None):
             db[w] = {}
         process_w(w, w_infos[w], db[w])
         i += 1
-        if i>= 1000:
+        if i>= 200:
             try:
                 with open("db.yml", 'w') as stream:
                     yaml.dump(db, stream, Dumper=yaml_dumper)
