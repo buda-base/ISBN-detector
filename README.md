@@ -21,3 +21,12 @@ Complex cases:
 Same ISBNs:
 - MW29980 / MW29975
 - W3CN25679 / W3CN26493
+
+W3CN5472
+
+cats:
+1) :rePublicationOf (ex: MW1AC8 -> MW2KG209029)
+2) MW1GS88140 (images) = MW1KG14712 (no images)
+3) error in isbn: MW1KG4294 should be  9789937900461, not 9789937818803
+4) same isbn for two unrelated books: W1KG21275 / W665
+

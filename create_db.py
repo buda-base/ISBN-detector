@@ -140,8 +140,9 @@ def has_id(db_ig_info):
     for fname, detections in db_ig_info.items():
         if fname == "n":
             continue
-        if len(detections) > 0:
-            return True
+        for det in detections:
+            if det["t"] == "EAN13":
+                return True
     return False
 
 def ordered_imglist(fnames, nb_tip):
