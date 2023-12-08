@@ -1,0 +1,7 @@
+select ?mw ?isbn {
+    ?id a bf:Isbn ;
+        rdf:value ?isbn .
+    ?mw bf:identifiedBy ?id .
+    ?mwa adm:adminAbout ?mw ;
+         adm:status bda:StatusReleased .
+}
