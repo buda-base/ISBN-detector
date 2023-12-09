@@ -133,12 +133,20 @@ def handle_differences(data, stats):
             print(mw+" has isbns in db not in scans: "+", ".join(from_db_not_in_scans))
         elif from_scans_not_in_db:
             print(mw+" has isbns in scans not in db: "+", ".join(from_scans_not_in_db))
-        if len(mw_data["from_db"]) == 1 and len(mw_data["from_scans"]) == 1 and not well_formed(mw_data["from_db"][0]):
-            data["proposed_substitutions"].append([mw, mw_data["from_db"][0], mw_data["from_scans"][0]])
+        if len(mw_data["from_db"]) == 1 and len(mw_data["from_scans"]) == 1:
+            if not well_formed(mw_data["from_db"][0]):
+                data["proposed_substitutions_malformed"].append([mw, mw_data["from_db"][0], mw_data["from_scans"][0]])
+            elif mw_data["from_db"][0] != mw_data["from_scans"][0]:
+                data["proposed_substitutions"].append([mw, mw_data["from_db"][0], mw_data["from_scans"][0]])
         if len(mw_data["from_db"]) == 1 and len(mw_data["from_scans"]) == 0 and not well_formed(mw_data["from_db"][0]):
             data["malformed_to_review"].append([mw, mw_data["from_db"][0]])
+    data["proposed_substitutions_malformed"] = sorted(data["proposed_substitutions_malformed"], key=lambda x: x[0])
     data["proposed_substitutions"] = sorted(data["proposed_substitutions"], key=lambda x: x[0])
     data["malformed_to_review"] = sorted(data["malformed_to_review"], key=lambda x: x[0])
+    with open('analysis/simple_substitutions_malformed.csv', 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
+        for row in data["proposed_substitutions_malformed"]:
+            writer.writerow(row)
     with open('analysis/simple_substitutions.csv', 'w', newline='') as csvfile:
         writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
         for row in data["proposed_substitutions"]:
@@ -147,7 +155,6 @@ def handle_differences(data, stats):
         writer = csv.writer(csvfile, quoting=csv.QUOTE_MINIMAL)
         for row in data["malformed_to_review"]:
             writer.writerow(row)
-    
 
 def main():
     db = None
@@ -171,6 +178,7 @@ def main():
         "isbn_info": {},
         "mw_info": {},
         "proposed_substitutions": [],
+        "proposed_substitutions_malformed": [],
         "malformed_to_review": []
     }
     get_mw_infos(data)
