@@ -29,4 +29,9 @@ cats:
 2) MW1GS88140 (images) = MW1KG14712 (no images)
 3) error in isbn: MW1KG4294 should be  9789937900461, not 9789937818803
 4) same isbn for two unrelated books: W1KG21275 / W665
+5) not correctly input in the db: MW8CZ135 has "2140 72030", should be 9787214072030
 
+Cases:
+- multi volumes where every volume has a detected isbn
+- multi volumes with some volumes have detected isbn, some not
+- multi volumes with one isbn recorded in the db but no detected isbn
