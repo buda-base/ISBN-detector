@@ -1,12 +1,21 @@
 select distinct ?mw ?w ?ig ?vn ?vpti {
   {
-    ?mw bdo:printMethod bdr:PrintMethod_Modern .
-  } union {
-    ?mw bdo:binding bdr:Binding_Codex_Perfect .
-  } union {
-    ?id a bf:Isbn ;
-        rdf:value ?isbn .
-    ?mw bf:identifiedBy ?id .
+    select distinct ?mw {
+      {
+        ?mw bdo:printMethod bdr:PrintMethod_Modern .
+      } union {
+        ?mw bdo:binding bdr:Binding_Codex_Perfect .
+      } union {
+        ?id a bf:Isbn ;
+            rdf:value ?isbn .
+        ?mw bf:identifiedBy ?id .
+      } union {
+        ?ev a :PublishedEvent ;
+            :onYear ?y .
+        FILTER(?y > "1980"^^xsd:gYear)
+        ?mw :instanceEvent ?ev .
+      }
+    }
   }
   ?mwadm adm:adminAbout ?mw ;
          adm:status bda:StatusReleased .
