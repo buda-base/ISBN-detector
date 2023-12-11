@@ -93,7 +93,11 @@ def getImageList(iiLocalName, igLocalName, force=False, getmissing=True):
 def getimg(wlname, iglname, fname):
     key = get_s3_folder_prefix(wlname, iglname)+fname
     blob = gets3blob(key)
-    return Image.open(blob)
+    try:
+        return Image.open(blob)
+    except:
+        print("error with image "+key)
+        return None
 
 #
 # db format
@@ -193,6 +197,8 @@ def process_ig(w, ig, ig_info, db_ig_info, re_run_det=False):
         if imgfname in db_ig_info and not re_run_det:
             continue
         img = getimg(w, ig, imgfname)
+        if img is None:
+            continue
         dets, found = get_detections(img)
         db_ig_info[imgfname] = dets
         if found:
