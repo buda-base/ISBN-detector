@@ -2,7 +2,7 @@ select distinct ?mw ?w ?ig ?vn ?vpti {
   {
     ?mw bdo:printMethod bdr:PrintMethod_Modern .
   } union {
-    ?mw bdo:printMethod bdr:Binding_Codex_Perfect .
+    ?mw bdo:binding bdr:Binding_Codex_Perfect .
   } union {
     ?id a bf:Isbn ;
         rdf:value ?isbn .
