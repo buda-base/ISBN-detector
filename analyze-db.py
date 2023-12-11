@@ -94,6 +94,9 @@ def analyze_w(w, w_dbinfo, mw, data, stats):
                 continue
             for det in detections:
                 if det["t"] == "EAN13":
+                    if not det["d"].startswith("978") and not det["d"].startswith("979"):
+                        # we just ignore EANs that are not ISBNs
+                        continue
                     isbn = det["d"]
                     if isbn not in seen_isbns:
                         if seen_isbns:
