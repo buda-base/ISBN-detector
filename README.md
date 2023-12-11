@@ -35,3 +35,5 @@ Cases:
 - multi volumes where every volume has a detected isbn (done)
 - multi volumes with only only one isbn detected in one or multiple volumes
 - multi volumes with different isbns recorded in the db (with question marks)
+
+W8LS25039 has an EAN but no ISBN

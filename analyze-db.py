@@ -240,8 +240,8 @@ def main():
             continue
         mw = w_to_mw[w]
         analyze_w(w, w_dbinfo, mw, data, stats)
-    #handle_duplicates(data, stats)
-    #handle_differences(data, stats)
+    handle_duplicates(data, stats)
+    handle_differences(data, stats)
     handle_multivolumes(data, stats)
     stats["total"] = len(data["isbn_info"].keys())
     print(stats)
