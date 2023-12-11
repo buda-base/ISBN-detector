@@ -186,7 +186,8 @@ def get_detections(pil_img):
 
 
 def process_ig(w, ig, ig_info, db_ig_info, re_run_det=False):
-    if has_id(db_ig_info):
+    if has_id(db_ig_info) or len(db_ig_info.keys()) > 9:
+        # already analyzed
         return
     flist = getImageList(w, ig)
     if flist is None:
