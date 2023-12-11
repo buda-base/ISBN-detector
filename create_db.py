@@ -200,6 +200,9 @@ def process_ig(w, ig, ig_info, db_ig_info, re_run_det=False):
         
 
 def process_w(wrid, w_info, db_w_info):
+    if wrid == "W3CN5472":
+        # there's a tiff in there that makes the process crash
+        return
     for ig, ig_info in w_info.items():
         if ig == "ro":
             continue

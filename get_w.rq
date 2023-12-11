@@ -3,6 +3,10 @@ select distinct ?mw ?w ?ig ?vn ?vpti {
     ?mw bdo:printMethod bdr:PrintMethod_Modern .
   } union {
     ?mw bdo:printMethod bdr:Binding_Codex_Perfect .
+  } union {
+    ?id a bf:Isbn ;
+        rdf:value ?isbn .
+    ?mw bf:identifiedBy ?id .
   }
   ?mwadm adm:adminAbout ?mw ;
          adm:status bda:StatusReleased .

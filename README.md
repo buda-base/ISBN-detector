@@ -32,6 +32,6 @@ cats:
 5) not correctly input in the db: MW8CZ135 has "2140 72030", should be 9787214072030
 
 Cases:
-- multi volumes where every volume has a detected isbn
-- multi volumes with some volumes have detected isbn, some not
-- multi volumes with one isbn recorded in the db but no detected isbn
+- multi volumes where every volume has a detected isbn (done)
+- multi volumes with only only one isbn detected in one or multiple volumes
+- multi volumes with different isbns recorded in the db (with question marks)
