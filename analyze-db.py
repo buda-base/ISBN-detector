@@ -2,6 +2,7 @@ import csv
 import yaml
 import re
 from tqdm import tqdm
+import pyisbn
 
 # use yaml.CSafeLoader / if available but don't crash if it isn't
 try:
@@ -35,6 +36,25 @@ def valid(isbn):
         return (result % 11) == check_digit
     else:
         return (result % 10) == check_digit
+
+def looksgood(isbn):
+    if not well_formed(isbn):
+        return False
+    if not isbn.startswith("978") and not isbn.startswith("979"):
+        return False
+    return pyisbn.validate(isbn)
+
+def addqm(isbn):
+    if looksgood(isbn):
+        return isbn
+    else:
+        return isbn+"?"
+
+def join_addqm(isbn_list):
+    new_list = []
+    for isbn in isbn_list:
+        new_list.append(addqm(isbn))
+    return ", ".join(new_list)
 
 def equivalent(isbn1, isbn2):
     if isbn1 is None and isbn2 is None:
@@ -168,16 +188,16 @@ def handle_differences(data, stats):
         #    print(mw+" has isbns in scans not in db: "+", ".join(from_scans_not_in_db))
         if len(mw_data["from_db"]) == 1 and len(mw_data["from_scans"]) == 1:
             if not well_formed(mw_data["from_db"][0]):
-                data["proposed_substitutions_malformed"].append([mw, mw_data["from_db"][0], mw_data["from_scans"][0]])
+                data["proposed_substitutions_malformed"].append([mw, mw_data["from_db"][0], addqm(mw_data["from_scans"][0])])
             elif mw_data["from_db"][0] != mw_data["from_scans"][0]:
                 if equivalent(mw_data["from_db"][0], mw_data["from_scans"][0]):
-                    data["new_isbns"].append([mw, mw_data["from_scans"][0], mw_data["from_db"][0], ""])
+                    data["new_isbns"].append([mw, addqm(mw_data["from_scans"][0]), mw_data["from_db"][0], ""])
                 else:
-                    data["proposed_substitutions"].append([mw, mw_data["from_db"][0], mw_data["from_scans"][0]])
+                    data["proposed_substitutions"].append([mw, mw_data["from_db"][0], addqm(mw_data["from_scans"][0])])
         if len(mw_data["from_db"]) == 1 and len(mw_data["from_scans"]) == 0 and not well_formed(mw_data["from_db"][0]):
             data["malformed_to_review"].append([mw, mw_data["from_db"][0]])
         if len(mw_data["from_db"]) == 0 and len(mw_data["from_scans"]) == 1:
-            data["new_isbns"].append([mw, mw_data["from_scans"][0], "", ""])
+            data["new_isbns"].append([mw, addqm(mw_data["from_scans"][0]), "", ""])
 
 
 def handle_multivolumes(data, stats):
@@ -200,20 +220,20 @@ def handle_multivolumes(data, stats):
                 elif len(mwinfo["from_db"]) == 1:
                     if mwinfo["from_db"][0] != isbn_list[0]:
                         if equivalent(mwinfo["from_db"][0], isbn_list[0]):
-                            data["new_isbns"].append([mw, isbn_list[0], mwinfo["from_db"][0], "found on all "+str(len(mwinfo["per_ig"]))+" volumes"])
+                            data["new_isbns"].append([mw, addqm(isbn_list[0]), mwinfo["from_db"][0], "found on all "+str(len(mwinfo["per_ig"]))+" volumes"])
                         else:
-                            data["proposed_substitutions"].append([mw, mwinfo["from_db"][0], mwinfo["from_scans"][0], "found on all "+str(len(mwinfo["per_ig"]))+" volumes"])
+                            data["proposed_substitutions"].append([mw, mwinfo["from_db"][0], addqm(mwinfo["from_scans"][0]), "found on all "+str(len(mwinfo["per_ig"]))+" volumes"])
                 else:
-                    data["proposed_substitutions"].append([mw, mwinfo["from_db"][0], mwinfo["from_scans"][0], "found on all "+str(len(mwinfo["per_ig"]))+" volumes"])
+                    data["proposed_substitutions"].append([mw, mwinfo["from_db"][0], addqm(mwinfo["from_scans"][0]), "found on all "+str(len(mwinfo["per_ig"]))+" volumes"])
             else:
                 if len(mwinfo["from_db"]) == 0 or (len(mwinfo["from_db"]) == 1 and has_equivalent_in(mwinfo["from_db"][0], all_isbns)):
                     data["mutli_volumes_diff_isbn_no_review"][mw] = []
                     for ig in ordered_igs:
-                        data["mutli_volumes_diff_isbn_no_review"][mw].append([mwinfo["ig_to_vnum"][ig], ", ".join(mwinfo["per_ig"][ig])])
+                        data["mutli_volumes_diff_isbn_no_review"][mw].append([mwinfo["ig_to_vnum"][ig], join_addqm(mwinfo["per_ig"][ig])])
                 else:
                     data["mutli_volumes_diff_isbn_review"][mw] = []
                     for ig in ordered_igs:
-                        data["mutli_volumes_diff_isbn_review"][mw].append([mwinfo["ig_to_vnum"][ig], ", ".join(mwinfo["from_db"]),", ".join(mwinfo["per_ig"][ig])])
+                        data["mutli_volumes_diff_isbn_review"][mw].append([mwinfo["ig_to_vnum"][ig], ", ".join(mwinfo["from_db"]), join_addqm(mwinfo["per_ig"][ig])])
         else:
             stats["found_not_all_volumes"] += 1
             stats["nb_volumes_found_after_first"] += len(mwinfo["per_ig"])
@@ -224,15 +244,15 @@ def handle_multivolumes(data, stats):
                 elif len(mwinfo["from_db"]) == 1:
                     if mwinfo["from_db"][0] != isbn_list[0]:
                         if equivalent(mwinfo["from_db"][0], isbn_list[0]):
-                            data["new_isbns"].append([mw, isbn_list[0], mwinfo["from_db"][0], "found on "+str(len(mwinfo["per_ig"]))+"/"+str(len(mwinfo["ig_to_vnum"]))+" volumes (no other isbn found)"])
+                            data["new_isbns"].append([mw, addqm(isbn_list[0]), mwinfo["from_db"][0], "found on "+str(len(mwinfo["per_ig"]))+"/"+str(len(mwinfo["ig_to_vnum"]))+" volumes (no other isbn found)"])
                         else:
-                            data["proposed_substitutions"].append([mw, mwinfo["from_db"][0], mwinfo["from_scans"][0], "found on "+str(len(mwinfo["per_ig"]))+"/"+str(len(mwinfo["ig_to_vnum"]))+" volumes (no other isbn found)"])
+                            data["proposed_substitutions"].append([mw, mwinfo["from_db"][0], addqm(mwinfo["from_scans"][0]), "found on "+str(len(mwinfo["per_ig"]))+"/"+str(len(mwinfo["ig_to_vnum"]))+" volumes (no other isbn found)"])
                 else:
                     data["proposed_substitutions"].append([mw, mwinfo["from_db"][0], mwinfo["from_scans"][0], "found on all "+str(len(mwinfo["per_ig"]))+"/"+str(len(mwinfo["ig_to_vnum"]))+" volumes (no other isbn found)"])
             else:
                 data["mutli_volumes_diff_isbn_review"][mw] = []
                 for ig in ordered_igs:
-                    data["mutli_volumes_diff_isbn_review"][mw].append([mwinfo["ig_to_vnum"][ig], ", ".join(mwinfo["from_db"]),", ".join(mwinfo["per_ig"][ig]) if ig in mwinfo["per_ig"] else "?"])
+                    data["mutli_volumes_diff_isbn_review"][mw].append([mwinfo["ig_to_vnum"][ig], ", ".join(mwinfo["from_db"]), join_addqm(mwinfo["per_ig"][ig]) if ig in mwinfo["per_ig"] else "?"])
 
 def main():
     db = None

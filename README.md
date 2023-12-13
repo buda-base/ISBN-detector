@@ -37,3 +37,6 @@ Cases:
 - multi volumes with different isbns recorded in the db (with question marks)
 
 W8LS25039 has an EAN but no ISBN
+W29518 has an ISBN in the barcode but indicates another ISBN just above
+in W15222, the software finds two EAN13 codes but one of them is just wrong
+cases where there's an ISBN10 in the data and an ISBN13 is detected
